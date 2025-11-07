@@ -2,6 +2,9 @@ const express = require("express") // aqui estou iniciando o express
 const router = express.Router() /// aqui estou configurando a primeira parte da rota    
 const { v4: uuidv4 } = require('uuid'); // aqui estou configurando o uuid
 
+const conectaBancoDeDados = require ('./bancoDeDados') // aqui estou ligando ao arquivo bancoDeDados.js
+conectaBancoDeDados() // aqui estou conectando ao banco de dados
+
 const app = express() // aqui estou iniciando o app
 app.use(express.json()) // aqui estou configurando o app para usar JSON
 const porta = 3333 // aqui estou configurando a porta
@@ -49,6 +52,7 @@ function corrigeMulher(request, response){
         if(mulher.id === request.params.id){
             return mulher
         }
+
 }
 const mulherEncontrada = mulheres.find(encontraMulher)
 if(request.body.nome){
@@ -62,9 +66,23 @@ if(request.body.imagem){
 }
 response.json(mulheres)
 }
+
+//DELETE
+function deletaMulher(request, response){
+    function todasMenosEla(mulher){
+        if(mulher.id !== request.params.id)
+            return mulher
+        }
+    
+        const mulheresQueFicam = mulheres.filter(todasMenosEla)
+        response.json(mulheresQueFicam)
+    }
+    
+
 app.use(router.get('/mulheres', mostraMulheres))// configurei a rota GET/mulheres
 app.use(router.post('/mulheres', criaMulher)) // configurei a rota POST/mulheres
 app.use(router.patch('/mulheres/:id', corrigeMulher)) // configurei a rota PATCH/mulheres/id
+app.use(router.delete('/mulheres/:id', deletaMulher)) // configurei a rota DELETE/mulheres/id
 
 //PORTA 
 function mostraPorta() {
