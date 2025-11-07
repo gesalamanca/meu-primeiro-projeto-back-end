@@ -1,81 +1,82 @@
 const express = require("express") // aqui estou iniciando o express
 const router = express.Router() /// aqui estou configurando a primeira parte da rota    
-const { v4: uuidv4 } = require('uuid'); // aqui estou configurando o uuid
 
 const conectaBancoDeDados = require ('./bancoDeDados') // aqui estou ligando ao arquivo bancoDeDados.js
 conectaBancoDeDados() // aqui estou conectando ao banco de dados
+
+const Mulher = require ('./mulherModel') // aqui estou ligando ao arquivo mulherModel.js
 
 const app = express() // aqui estou iniciando o app
 app.use(express.json()) // aqui estou configurando o app para usar JSON
 const porta = 3333 // aqui estou configurando a porta
 
-// aqui estou criando lista inicial de mulheres
-const mulheres = [
 
-    {  id:'1',
-        nome: "Geovana Salamanca",
-        imagem: "https://github.com/gesalamanca.png",
-        minibio: "Analista de Testes e futura desenvolvedora" 
-    },
-    {  id:'2',
-        nome: "Iana Chan",
-        imagem: "https://bit.ly/3JCXBqP",
-        minibio: "Fundadora Programaria", 
-    },
-    {   id:'3',
-        nome: "Simara Conceição",
-        imagem: "https://bit.ly/3LJIyOF",
-        minibio: "Fundadora Programaria",
-}
-]
 
 // GET
-function mostraMulheres(request, response){
-    response.json(mulheres)
+async function mostraMulheres(request, response){
+    try {
+        const mulheresVindasDoBancoDeDados = await Mulher.find() // aqui estou buscando as mulheres no banco de dados
+        response.json(mulheresVindasDoBancoDeDados) // aqui estou retornando as mulheres em formato JSON
+        }
+    catch(erro){
+        console.log(erro)
+}
 }
 
 //POST
-function criaMulher(request, response){ 
-    const novaMulher = {
-        id: uuidv4(),
+async function criaMulher(request, response){ 
+    const novaMulher = new Mulher({
         nome: request.body.nome,
         imagem: request.body.imagem,
-        minibio: request.body.minibio
+        minibio: request.body.minibio,
+        citacao: request.body.citacao
+    })
+    try{
+        const mulherCriada = await novaMulher.save() // aqui estou salvando a nova mulher no banco de dados
+        response.status(201).json(mulherCriada) // aqui estou retornando a nova mulher em formato JSON com o status 201
     }
-    mulheres.push(novaMulher)
-    response.json(mulheres)
+    catch(erro){
+        console.log(erro)
+    }
 }      
 
 //PATCH
-function corrigeMulher(request, response){
-    function encontraMulher(mulher){
-        if(mulher.id === request.params.id){
-            return mulher
+async function corrigeMulher(request, response){
+    try{
+        const mulherEncontrada = await Mulher.findById(request.params.id) // aqui estou buscando a mulher pelo id no banco de dados
+    if(request.body.nome){
+    mulherEncontrada.nome = request.body.nome
+    }
+    if(request.body.minibio){
+    mulherEncontrada.minibio= request.body.minibio
+    }
+    if(request.body.imagem){
+    mulherEncontrada.imagem = request.body.imagem
+    }
+     if(request.body.citacao){
+    mulherEncontrada.citacao = request.body.citacao
+    }
+    const mulherAtualizadaNoBancoDeDados = await mulherEncontrada.save() // aqui estou salvando a mulher atualizada no banco de dados
+    response.json(mulherAtualizadaNoBancoDeDados) // aqui estou retornando a mulher atualizada em formato JSON
         }
 
+    
+    catch(erro){
+        console.log(erro)
+
 }
-const mulherEncontrada = mulheres.find(encontraMulher)
-if(request.body.nome){
-    mulherEncontrada.nome = request.body.nome
-}
-if(request.body.minibio){
-    mulherEncontrada.minibio= request.body.minibio
-}
-if(request.body.imagem){
-    mulherEncontrada.imagem = request.body.imagem
-}
-response.json(mulheres)
 }
 
 //DELETE
-function deletaMulher(request, response){
-    function todasMenosEla(mulher){
-        if(mulher.id !== request.params.id)
-            return mulher
-        }
-    
-        const mulheresQueFicam = mulheres.filter(todasMenosEla)
-        response.json(mulheresQueFicam)
+async function deletaMulher(request, response){
+    try{
+        await Mulher.findByIdAndDelete(request.params.id) // aqui estou deletando a mulher pelo id no banco de dados
+    response.json({mensagem: 'Mulher deletada com sucesso!'}) // aqui estou retornando uma mensagem de sucesso em formato JSON
+
+    } catch(erro){
+        console.log(erro)
+    }
+
     }
     
 
